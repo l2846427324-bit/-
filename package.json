@@ -1,0 +1,15 @@
+{
+  "name": "fund-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Realtime fund portfolio dashboard with fund, ETF proxy and allocation advice.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "check": "node --check server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
