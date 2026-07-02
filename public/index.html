@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>基金持仓实时看板</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <main class="app">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Portfolio Dashboard</p>
+          <h1>基金持仓实时看板</h1>
+          <p class="subtle" id="data-note">加载数据中</p>
+        </div>
+        <div class="top-actions">
+          <button id="refresh" type="button" title="刷新数据">刷新</button>
+          <span id="updated" class="timestamp">--</span>
+        </div>
+      </header>
+
+      <section class="summary-grid">
+        <article class="metric">
+          <span>持仓金额</span>
+          <strong id="invested">--</strong>
+        </article>
+        <article class="metric">
+          <span>机会资金</span>
+          <strong id="cash">--</strong>
+        </article>
+        <article class="metric">
+          <span>总资金</span>
+          <strong id="total">--</strong>
+        </article>
+        <article class="metric pending">
+          <span>买入待确认</span>
+          <strong id="pending-buy">--</strong>
+        </article>
+        <article class="metric pending">
+          <span>卖出将到账</span>
+          <strong id="pending-sell">--</strong>
+        </article>
+        <article class="metric">
+          <span>支付宝实际昨日收益</span>
+          <strong id="actual-day-change">--</strong>
+          <small>按你最新截图逐项汇总</small>
+        </article>
+        <article class="metric">
+          <span>盘中代理估算</span>
+          <strong id="day-change">--</strong>
+          <small id="day-change-source">ETF/指数代理估算中</small>
+        </article>
+      </section>
+
+      <section class="panel cash-panel">
+        <div class="cash-copy">
+          <h2>机会资金设置</h2>
+          <p>输入你当前未分配资金，系统会保存并实时重算分配建议。</p>
+        </div>
+        <form id="cash-form" class="cash-form">
+          <label for="cash-input">机会资金</label>
+          <input id="cash-input" name="cash" type="number" min="0" step="0.01" inputmode="decimal" placeholder="150">
+          <button type="submit">保存并重算</button>
+          <span id="cash-status" class="cash-status"></span>
+        </form>
+      </section>
+
+      <section class="analysis-grid">
+        <section class="panel analysis-main">
+          <div class="panel-head">
+            <div>
+              <h2>今日分析</h2>
+              <p id="analysis-stance">--</p>
+            </div>
+            <span id="analysis-badge" class="pill">--</span>
+          </div>
+          <h3 id="analysis-headline">--</h3>
+          <p id="analysis-action" class="analysis-action">--</p>
+          <div id="analysis-metrics" class="analysis-metrics"></div>
+        </section>
+
+        <section class="panel action-panel">
+          <div class="panel-head">
+            <div>
+              <h2>操作优先级</h2>
+              <p>围绕当前机会资金</p>
+            </div>
+          </div>
+          <ol id="priority-list" class="priority-list"></ol>
+        </section>
+      </section>
+
+      <section class="panel plan-panel">
+        <div class="panel-head">
+          <div>
+            <h2>机会资金实时分配</h2>
+            <p id="allocation-summary">--</p>
+          </div>
+        </div>
+        <div id="allocation-plan" class="allocation-plan"></div>
+      </section>
+
+      <section class="panel sell-panel">
+        <div class="panel-head">
+          <div>
+            <h2>卖出/减仓预警</h2>
+            <p id="sell-alert-meta">触发清仓、减仓或止盈保护时会直接列出</p>
+          </div>
+          <button id="sell-refresh" type="button" title="立即刷新卖出/减仓预警">刷新</button>
+        </div>
+        <div id="sell-alerts" class="sell-alerts"></div>
+      </section>
+
+      <section class="panel buy-panel">
+        <div class="panel-head">
+          <div>
+            <h2>补仓机会</h2>
+            <p id="buy-alert-meta">结合机会资金、板块强弱和仓位风险实时重算</p>
+          </div>
+          <button id="buy-refresh" type="button" title="立即刷新补仓机会">刷新</button>
+        </div>
+        <div id="buy-alerts" class="buy-alerts"></div>
+      </section>
+
+      <section class="panel future-panel">
+        <div class="panel-head">
+          <div>
+            <h2>未来发展趋势</h2>
+            <p id="future-meta">分析未来3到15天的板块趋势、风险和操作窗口</p>
+          </div>
+          <button id="future-refresh" type="button" title="立即刷新未来趋势">刷新</button>
+        </div>
+        <div id="future-summary" class="future-summary"></div>
+        <div id="future-windows" class="future-windows"></div>
+        <div id="future-groups" class="future-groups"></div>
+        <div class="future-watch">
+          <h3>关键基金观察</h3>
+          <div id="future-watchlist" class="future-watchlist"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head table-head">
+          <div>
+            <h2>持仓明细</h2>
+            <p>基金净值为最新披露，盘中变化为代理估算</p>
+          </div>
+          <div class="table-tools">
+            <label>
+              排序
+              <select id="holding-sort">
+                <option value="profit">持有盈亏</option>
+                <option value="profitPct">持有收益率</option>
+                <option value="estimatedChange">估算盈亏</option>
+                <option value="intradayPct">代理涨跌</option>
+                <option value="amount">金额</option>
+                <option value="rate1m">1月</option>
+                <option value="rate1y">1年</option>
+                <option value="name">基金名称</option>
+                <option value="group">方向</option>
+                <option value="manual">手动排序</option>
+              </select>
+            </label>
+            <button id="holding-sort-direction" type="button">降序</button>
+            <span id="coverage" class="pill">覆盖率 --</span>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>基金</th>
+                <th>金额</th>
+                <th>方向</th>
+                <th>最新净值</th>
+                <th>持有盈亏 ↓</th>
+                <th>1月</th>
+                <th>1年</th>
+                <th>代理涨跌</th>
+                <th>估算盈亏</th>
+                <th>建议</th>
+              </tr>
+            </thead>
+            <tbody id="holdings"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel opinion-panel">
+        <div class="panel-head">
+          <div>
+            <h2>全网观点追踪</h2>
+            <p id="opinion-meta">抓取公开博主/网页观点并提炼共识</p>
+          </div>
+          <span id="opinion-badge" class="pill">--</span>
+        </div>
+        <div class="opinion-consensus">
+          <strong id="opinion-summary">--</strong>
+          <div id="opinion-common" class="opinion-common"></div>
+        </div>
+        <div id="opinion-list" class="opinion-list"></div>
+      </section>
+
+      <section class="panel skill-panel">
+        <div class="panel-head">
+          <div>
+            <h2>本次使用的 skill</h2>
+            <p>分析逻辑来源</p>
+          </div>
+        </div>
+        <div id="skill-list" class="skill-list"></div>
+      </section>
+
+      <section class="content-grid">
+        <section class="panel allocation-panel">
+          <div class="panel-head">
+            <h2>仓位结构</h2>
+            <p>按持仓方向汇总</p>
+          </div>
+          <div class="allocation-wrap">
+            <canvas id="allocation" width="320" height="320" aria-label="仓位结构图"></canvas>
+            <div id="allocation-list" class="legend"></div>
+          </div>
+        </section>
+
+        <section class="panel pulse-panel">
+          <div class="panel-head">
+            <h2>今日强弱</h2>
+            <p>按代理ETF/指数涨跌排序</p>
+          </div>
+          <div id="pulse-list" class="pulse-list"></div>
+        </section>
+      </section>
+
+    </main>
+    <script src="./app.js"></script>
+  </body>
+</html>
